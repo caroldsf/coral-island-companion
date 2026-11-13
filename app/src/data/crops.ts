@@ -3,6 +3,7 @@ export const ranks = ['F', 'E', 'D', 'C', 'B', 'A', 'S'] as const
 export type Season = typeof seasons[number]
 export type Rank = typeof ranks[number]
 export type CropKind = 'crop' | 'seedling' | 'tree'
+export type CropCategory = 'Fruta' | 'Vegetal' | 'Flor' | 'Grão' | 'Outros'
 
 export interface Crop {
   id: string
@@ -11,6 +12,7 @@ export interface Crop {
   seasons: readonly Season[]
   rank: Rank
   kind: CropKind
+  category: CropCategory
   growthDays: number
   regrowthDays?: number
   seedPrice: number
@@ -132,6 +134,19 @@ const oceanRows: CropRow[] = [
   ['Twinshade sealeaf', 'Twinshade sealeaf', [...seasons], 'F', 6, 115, 157],
 ]
 
+// Categorias culinárias/práticas para leitura rápida no catálogo, não classificação botânica.
+const fruitNames = new Set(['Strawberry','Blackberry','Blueberry','Melon','Pineapple','Starfruit','Cranberry','Grape','Watermelon','Banana','Plum','Rambutan','Dragonfruit','Jackfruit','Papaya','Lemon','Pear','Avocado','Lychee','Snake fruit','Durian','Orange','Mango','Peach','Apple','Olive'])
+const flowerNames = new Set(['Daisy','Peony','Poppy','Snowdrop','Gardenia','Iris','Lily','Rose','Sunflower','Blue dahlia','Cactus','Fairy rose','Orchid','Bluebell blossom','Helixpur blossom','Marinethorn blossom'])
+const grainNames = new Set(['Corn','Wheat','Rice','Barley','Coffee bean','Cocoa bean','Soybean','Amaranth','Tea leaf'])
+const otherNames = new Set(['Cotton','Sugarcane','Almond'])
+export function cropCategory(englishName: string): CropCategory {
+  if (fruitNames.has(englishName)) return 'Fruta'
+  if (flowerNames.has(englishName)) return 'Flor'
+  if (grainNames.has(englishName)) return 'Grão'
+  if (otherNames.has(englishName)) return 'Outros'
+  return 'Vegetal'
+}
+
 function toCrops(rows: CropRow[], kind: CropKind, yieldPerHarvest: number): Crop[] {
   return rows.map(([englishName, name, growingSeasons, rank, growthDays, seedPrice, sellPrice, regrowthDays]) => ({
     id: englishName.toLowerCase().replaceAll(' ', '-'),
@@ -140,6 +155,7 @@ function toCrops(rows: CropRow[], kind: CropKind, yieldPerHarvest: number): Crop
     seasons: growingSeasons,
     rank,
     kind,
+    category: cropCategory(englishName),
     growthDays,
     seedPrice,
     sellPrice,
