@@ -130,6 +130,7 @@ function App() {
     return validProfile(stored) ? stored : null
   })
   const [selectedSeasons, setSelectedSeasons] = useState<Season[]>([profile?.season ?? defaultProfile.season])
+  const [regrowthOnly, setRegrowthOnly] = useState(false)
   const [tab, setTab] = useState<Tab>('crops')
   const [query, setQuery] = useState('')
   const [spoilers, setSpoilers] = useState(false)
@@ -208,7 +209,7 @@ function App() {
     if (tab === 'search') return matches(query, item.name, item.englishName, labels[item.kind], ...item.seasons)
     if (tab === 'favorites') return favorites.includes(cropId(item))
     if (tab === 'fruit') return item.kind !== 'crop'
-    return tab === 'crops' && item.kind === 'crop' && selectedSeasons.length > 0 &&
+    return tab === 'crops' && item.kind === 'crop' && (!regrowthOnly || Boolean(item.regrowthDays)) && selectedSeasons.length > 0 &&
       selectedSeasons.every(season => item.seasons.includes(season))
   })
   const guideResults = visibleGuides.filter(item => {
@@ -262,6 +263,8 @@ function App() {
               </div>
             })}
           </div>
+          <label className="checkbox"><input type="checkbox" checked={regrowthOnly}
+            onChange={event => setRegrowthOnly(event.target.checked)} /> Só plantas que rebrotam</label>
         </>}
         {tab === 'fruit' && <p className="muted">Mudas sazonais morrem fora das estações compatíveis. Árvores permanentes sobrevivem o ano todo e frutificam nas estações indicadas.</p>}
         {tab === 'calc' && <Calculator key={current.season} available={available.filter(item => item.environment !== 'ocean' && item.seedPrice != null && item.sellPrice != null)}
