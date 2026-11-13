@@ -72,3 +72,8 @@ summary { cursor: pointer; }
 }
 
 .regrowth-chip { background: #d9f0df; color: #20593e; font-weight: 700; }
+
+.building-upgrade { background: #edf7ee; border-color: #c8e3cf; }
+.building-levels { display: flex; flex-wrap: wrap; gap: 6px; margin: 0 0 12px; }
+.building-levels .tab { padding: 6px 9px; font-size: .8rem; }
+.building-levels .tab[aria-pressed=true] { background: #236f5a; color: white; border-color: #236f5a; }

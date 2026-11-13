@@ -22,6 +22,10 @@ type Guide = {
   rank?: string; spoiler?: boolean
 }
 const entries: readonly Guide[] = guides
+const buildingLevels: Readonly<Record<string, readonly string[]>> = {
+  'building-coop': ['building-coop', 'building-deluxe-coop', 'building-coop-level-3'],
+  'building-barn': ['building-barn', 'building-deluxe-barn', 'building-barn-level-3'],
+}
 const seasonIcons = ['🌸', '☀️', '🍂', '❄️']
 const labels = { crop: 'Semente', seedling: 'Muda sazonal', tree: 'Árvore permanente' }
 const money = (amount: number) => amount.toLocaleString('pt-BR') + ' g'
@@ -131,6 +135,7 @@ function App() {
   })
   const [selectedSeasons, setSelectedSeasons] = useState<Season[]>([profile?.season ?? defaultProfile.season])
   const [regrowthOnly, setRegrowthOnly] = useState(false)
+  const [selectedLevels, setSelectedLevels] = useState<Record<string, string>>({})
   const [tab, setTab] = useState<Tab>('crops')
   const [query, setQuery] = useState('')
   const [spoilers, setSpoilers] = useState(false)
@@ -194,28 +199,38 @@ function App() {
     </article>
   }
 
-  function guideCard(item: Guide) {
-    return <article key={guideId(item)} className="card">
-      <div className="card-title"><h3><span className="item-icon" aria-hidden="true">{guideIcon(item)}</span>{item.name}</h3>{favorite(guideId(item), item.name)}</div>
-      {item.originalName && item.originalName !== item.name && <p className="original">{item.originalName}</p>}
-      {item.rank && <span className="chip">Cidade {item.rank}+</span>}
-      {item.description && <p className="muted">{item.description}</p>}
-      {item.details.length > 0 && <ul className="details">{item.details.map(detail => <li key={detail}>{detail}</li>)}</ul>}
-      <div className="card-actions"><a href={item.source} target="_blank" rel="noreferrer">Fonte</a></div>
+  function guideCard(base: Guide) {
+    const levelIds = tab === 'buildings' ? buildingLevels[base.id] : undefined
+    const item = visibleGuides.find(entry => entry.id === selectedLevels[base.id]) ?? base
+    const active = levelIds ? item : base
+    return <article key={guideId(base)} className={'card' + (active !== base ? ' building-upgrade' : '')}>
+      <div className="card-title"><h3><span className="item-icon" aria-hidden="true">{guideIcon(base)}</span>{base.name}</h3>{favorite(guideId(active), active.name)}</div>
+      {levelIds && <div className="building-levels" role="group" aria-label={'Níveis de ' + base.name}>
+        {levelIds.map((id, index) => visibleGuides.some(entry => entry.id === id) &&
+          <button key={id} type="button" className="tab" aria-pressed={active.id === id}
+            onClick={() => setSelectedLevels(current => ({ ...current, [base.id]: id }))}>Nível {index + 1}</button>)}
+      </div>}
+      {active.originalName && active.originalName !== active.name && <p className="original">{active.originalName}</p>}
+      {active.rank && <span className="chip">Cidade {active.rank}+</span>}
+      {active.description && <p className="muted">{active.description}</p>}
+      {active.details.length > 0 && <ul className="details">{active.details.map(detail => <li key={detail}>{detail}</li>)}</ul>}
+      <div className="card-actions"><a href={active.source} target="_blank" rel="noreferrer">Fonte</a></div>
     </article>
   }
 
   const cropResults = available.filter(item => {
     if (tab === 'search') return matches(query, item.name, item.englishName, labels[item.kind], ...item.seasons)
     if (tab === 'favorites') return favorites.includes(cropId(item))
-    if (tab === 'fruit') return item.kind !== 'crop'
-    return tab === 'crops' && item.kind === 'crop' && (!regrowthOnly || Boolean(item.regrowthDays)) && selectedSeasons.length > 0 &&
+    if (tab === 'fruit' && item.kind === 'crop') return false
+    if (tab === 'crops' && (item.kind !== 'crop' || (regrowthOnly && !item.regrowthDays))) return false
+    return (tab === 'fruit' || tab === 'crops') && selectedSeasons.length > 0 &&
       selectedSeasons.every(season => item.seasons.includes(season))
   })
   const guideResults = visibleGuides.filter(item => {
     if (tab === 'search') return matches(query, item.name, item.originalName ?? '', item.description, ...item.details)
     if (tab === 'favorites') return favorites.includes(guideId(item))
-    return item.category === tab
+    return item.category === tab && (tab !== 'buildings' ||
+      !Object.values(buildingLevels).some(levels => levels.slice(1).includes(item.id)))
   })
   const count = cropResults.length + guideResults.length
   const title = tab === 'crops' ? 'Plantações por estação' :
@@ -246,8 +261,9 @@ function App() {
       </nav>
       <section className="panel" aria-labelledby="section-title">
         <h2 ref={heading} tabIndex={-1} id="section-title">{title}</h2>
-        {tab === 'crops' && <>
-          <p className="muted">Marque várias estações para ver culturas que produzem em <strong>todas</strong> elas. Use <strong>Só esta</strong> para ver uma estação de cada vez.</p>
+        {(tab === 'crops' || tab === 'fruit') && <>
+          {tab === 'fruit' && <p className="muted">Mudas sazonais morrem fora das estações compatíveis. Árvores permanentes sobrevivem o ano todo e frutificam nas estações indicadas.</p>}
+          <p className="muted">Marque várias estações para ver {tab === 'fruit' ? 'frutíferas que dão frutos' : 'culturas que produzem'} em <strong>todas</strong> elas. Use <strong>Só esta</strong> para ver uma estação de cada vez.</p>
           <div className="filters" role="group" aria-label="Estações">
             {seasons.map((season, index) => {
               const checked = selectedSeasons.includes(season)
@@ -263,10 +279,9 @@ function App() {
               </div>
             })}
           </div>
-          <label className="checkbox"><input type="checkbox" checked={regrowthOnly}
-            onChange={event => setRegrowthOnly(event.target.checked)} /> Só plantas que rebrotam</label>
+          {tab === 'crops' && <label className="checkbox"><input type="checkbox" checked={regrowthOnly}
+            onChange={event => setRegrowthOnly(event.target.checked)} /> Só plantas que rebrotam</label>}
         </>}
-        {tab === 'fruit' && <p className="muted">Mudas sazonais morrem fora das estações compatíveis. Árvores permanentes sobrevivem o ano todo e frutificam nas estações indicadas.</p>}
         {tab === 'calc' && <Calculator key={current.season} available={available.filter(item => item.environment !== 'ocean' && item.seedPrice != null && item.sellPrice != null)}
           selected={selectedCrop} setSelected={setSelectedCrop} initialSeason={current.season} />}
         {tab === 'about' && <>
@@ -284,7 +299,7 @@ function App() {
           <p className="muted" role="status">{count === 1 ? '1 resultado' : `${count} resultados`}</p>
           {count > 0 ? <div className="cards">{cropResults.map(cropCard)}{guideResults.map(guideCard)}</div> :
             <p className="muted">{tab === 'favorites' ? 'Use a estrela das fichas para salvar seus favoritos.' :
-              tab === 'crops' && !selectedSeasons.length ? 'Escolha ao menos uma estação.' : 'Nenhum item corresponde aos filtros atuais.'}</p>}
+              (tab === 'crops' || tab === 'fruit') && !selectedSeasons.length ? 'Escolha ao menos uma estação.' : 'Nenhum item corresponde aos filtros atuais.'}</p>}
         </>}
       </section>
       <footer>Coral Island Companion · Guia não oficial 🌴</footer>
