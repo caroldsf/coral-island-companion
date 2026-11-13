@@ -77,3 +77,6 @@ summary { cursor: pointer; }
 .building-levels { display: flex; flex-wrap: wrap; gap: 6px; margin: 0 0 12px; }
 .building-levels .tab { padding: 6px 9px; font-size: .8rem; }
 .building-levels .tab[aria-pressed=true] { background: #236f5a; color: white; border-color: #236f5a; }
+
+/* Identificação rápida do tipo de colheita */
+.category-chip{background:#e6f2e9;color:#246449;border:1px solid #cde5d5;font-weight:750}
