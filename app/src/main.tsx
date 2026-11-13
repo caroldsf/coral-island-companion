@@ -6,6 +6,7 @@ import type { Crop } from './data/crops'
 import { guides } from './data/guides'
 import { defaultProfile, matches, ranks, readLocal, seasons, validProfile, visibleAtRank, writeLocal } from './preferences'
 import type { Profile, Season } from './preferences'
+import { cropIcon, guideIcon } from './icons'
 import './styles.css'
 
 const tabs = {
@@ -172,7 +173,7 @@ function App() {
 
   function cropCard(item: Crop) {
     return <article key={cropId(item)} className="card">
-      <div className="card-title"><h3>{item.name}</h3>{favorite(cropId(item), item.name)}</div>
+      <div className="card-title"><h3><span className="item-icon" aria-hidden="true">{cropIcon(item)}</span>{item.name}</h3>{favorite(cropId(item), item.name)}</div>
       {item.englishName !== item.name && <p className="original">{item.englishName}</p>}
       <span className="chip">{labels[item.kind]}</span>
       {item.environment === 'ocean' ? <span className="chip">Cultivo subaquático</span> : <span className="chip">Cidade {item.rank}+</span>}
@@ -193,7 +194,7 @@ function App() {
 
   function guideCard(item: Guide) {
     return <article key={guideId(item)} className="card">
-      <div className="card-title"><h3>{item.name}</h3>{favorite(guideId(item), item.name)}</div>
+      <div className="card-title"><h3><span className="item-icon" aria-hidden="true">{guideIcon(item)}</span>{item.name}</h3>{favorite(guideId(item), item.name)}</div>
       {item.originalName && item.originalName !== item.name && <p className="original">{item.originalName}</p>}
       {item.rank && <span className="chip">Cidade {item.rank}+</span>}
       {item.description && <p className="muted">{item.description}</p>}
@@ -244,13 +245,21 @@ function App() {
       <section className="panel" aria-labelledby="section-title">
         <h2 ref={heading} tabIndex={-1} id="section-title">{title}</h2>
         {tab === 'crops' && <>
-          <p className="muted">Selecione as estações para ver somente as culturas que produzem em <strong>todas</strong> elas.</p>
+          <p className="muted">Marque várias estações para ver culturas que produzem em <strong>todas</strong> elas. Use <strong>Só esta</strong> para ver uma estação de cada vez.</p>
           <div className="filters" role="group" aria-label="Estações">
-            {seasons.map((season, index) => <button key={season} type="button"
-              aria-pressed={selectedSeasons.includes(season)}
-              className={'season' + (selectedSeasons.includes(season) ? ' active' : '')}
-              onClick={() => setSelectedSeasons(current => current.includes(season)
-                ? current.filter(item => item !== season) : [...current, season])}>{seasonIcons[index]} {season}</button>)}
+            {seasons.map((season, index) => {
+              const checked = selectedSeasons.includes(season)
+              return <div className="season-control" key={season}>
+                <label className={'season checkbox' + (checked ? ' active' : '')}>
+                  <input type="checkbox" checked={checked}
+                    onChange={() => setSelectedSeasons(current => current.includes(season)
+                      ? current.filter(item => item !== season) : [...current, season])} />
+                  <span aria-hidden="true">{seasonIcons[index]}</span> {season}
+                </label>
+                <button type="button" className="season-only" aria-label={`Ver só ${season}`}
+                  onClick={() => setSelectedSeasons([season])}>Só esta</button>
+              </div>
+            })}
           </div>
         </>}
         {tab === 'fruit' && <p className="muted">Mudas sazonais morrem fora das estações compatíveis. Árvores permanentes sobrevivem o ano todo e frutificam nas estações indicadas.</p>}
@@ -281,5 +290,6 @@ function App() {
 }
 
 createRoot(document.getElementById('root')!).render(<App />)
+
 
 
