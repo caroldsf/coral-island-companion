@@ -104,3 +104,13 @@ test('ocean crops require spoiler opt-in and are excluded from land projections'
   }), null)
 })
 
+
+test('categorias seguem os tipos da tabela de cultivos', () => {
+  assert.equal(item('corn').category, 'Vegetal')
+  assert.equal(item('tomato').category, 'Fruta')
+  assert.equal(item('pumpkin').category, 'Fruta')
+  assert.equal(item('petalia').category, 'Flor')
+  assert.equal(item('wheat').category, 'Grão')
+  assert.equal(item('tea-leaf').category, 'Erva')
+  assert.equal(item('cotton').category, 'Recurso')
+})

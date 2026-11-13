@@ -1,8 +1,8 @@
 import { useEffect, useRef, useState } from 'react'
 import { createRoot } from 'react-dom/client'
 import type { FormEvent, ReactNode } from 'react'
-import { calculateCrop, crops } from './data/crops'
-import type { Crop } from './data/crops'
+import { calculateCrop, cropCategories, crops } from './data/crops'
+import type { Crop, CropCategory } from './data/crops'
 import { guides } from './data/guides'
 import { defaultProfile, matches, ranks, readLocal, seasons, validProfile, visibleAtRank, writeLocal } from './preferences'
 import type { Profile, Season } from './preferences'
@@ -135,6 +135,8 @@ function App() {
   })
   const [selectedSeasons, setSelectedSeasons] = useState<Season[]>([profile?.season ?? defaultProfile.season])
   const [regrowthOnly, setRegrowthOnly] = useState(false)
+  const [category, setCategory] = useState<CropCategory | ''>('')
+  const [permanentOnly, setPermanentOnly] = useState(false)
   const [selectedLevels, setSelectedLevels] = useState<Record<string, string>>({})
   const [tab, setTab] = useState<Tab>('crops')
   const [query, setQuery] = useState('')
@@ -222,8 +224,10 @@ function App() {
   const cropResults = available.filter(item => {
     if (tab === 'search') return matches(query, item.name, item.englishName, labels[item.kind], item.category, ...item.seasons)
     if (tab === 'favorites') return favorites.includes(cropId(item))
+    if (tab === 'fruit' && permanentOnly) return item.kind === 'tree'
     if (tab === 'fruit' && item.kind === 'crop') return false
-    if (tab === 'crops' && (item.kind !== 'crop' || (regrowthOnly && !item.regrowthDays))) return false
+    if (tab === 'crops' && (item.kind !== 'crop' || (regrowthOnly && !item.regrowthDays) ||
+      (category && item.category !== category))) return false
     return (tab === 'fruit' || tab === 'crops') && selectedSeasons.length > 0 &&
       selectedSeasons.every(season => item.seasons.includes(season))
   })
@@ -264,6 +268,9 @@ function App() {
         <h2 ref={heading} tabIndex={-1} id="section-title">{title}</h2>
         {(tab === 'crops' || tab === 'fruit') && <>
           {tab === 'fruit' && <p className="muted">Mudas sazonais morrem fora das estações compatíveis. Árvores permanentes sobrevivem o ano todo e frutificam nas estações indicadas.</p>}
+          {tab === 'fruit' && <label className="checkbox"><input type="checkbox" checked={permanentOnly}
+            onChange={event => setPermanentOnly(event.target.checked)} /> Só árvores permanentes, de qualquer estação</label>}
+          {!(tab === 'fruit' && permanentOnly) && <>
           <p className="muted">Marque várias estações para ver {tab === 'fruit' ? 'frutíferas que dão frutos' : 'culturas que produzem'} em <strong>todas</strong> elas. Use <strong>Só esta</strong> para ver uma estação de cada vez.</p>
           <div className="filters" role="group" aria-label="Estações">
             {seasons.map((season, index) => {
@@ -280,8 +287,15 @@ function App() {
               </div>
             })}
           </div>
-          {tab === 'crops' && <label className="checkbox"><input type="checkbox" checked={regrowthOnly}
-            onChange={event => setRegrowthOnly(event.target.checked)} /> Só plantas que rebrotam</label>}
+          </>}
+          {tab === 'crops' && <div className="crop-filters">
+            <Field name="Categoria"><select value={category} onChange={event => setCategory(event.target.value as CropCategory | '')}>
+              <option value="">Todas as categorias</option>
+              {cropCategories.map(type => <option key={type}>{type}</option>)}
+            </select></Field>
+            <label className="checkbox"><input type="checkbox" checked={regrowthOnly}
+              onChange={event => setRegrowthOnly(event.target.checked)} /> Só plantas que rebrotam</label>
+          </div>}
         </>}
         {tab === 'calc' && <Calculator key={current.season} available={available.filter(item => item.environment !== 'ocean' && item.seedPrice != null && item.sellPrice != null)}
           selected={selectedCrop} setSelected={setSelectedCrop} initialSeason={current.season} />}
@@ -300,7 +314,9 @@ function App() {
           <p className="muted" role="status">{count === 1 ? '1 resultado' : `${count} resultados`}</p>
           {count > 0 ? <div className="cards">{cropResults.map(cropCard)}{guideResults.map(guideCard)}</div> :
             <p className="muted">{tab === 'favorites' ? 'Use a estrela das fichas para salvar seus favoritos.' :
-              (tab === 'crops' || tab === 'fruit') && !selectedSeasons.length ? 'Escolha ao menos uma estação.' : 'Nenhum item corresponde aos filtros atuais.'}</p>}
+              (tab === 'crops' || (tab === 'fruit' && !permanentOnly)) && !selectedSeasons.length ? 'Escolha ao menos uma estação.' :
+              tab === 'fruit' && permanentOnly && !spoilers ? 'As árvores permanentes do guia ficam disponíveis a partir do rank C.' :
+              'Nenhum item corresponde aos filtros atuais.'}</p>}
         </>}
       </section>
       <footer>Coral Island Companion · Guia não oficial 🌴</footer>

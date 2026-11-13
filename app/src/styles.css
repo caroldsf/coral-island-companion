@@ -80,3 +80,6 @@ summary { cursor: pointer; }
 
 /* Identificação rápida do tipo de colheita */
 .category-chip{background:#e6f2e9;color:#246449;border:1px solid #cde5d5;font-weight:750}
+
+.crop-filters { display: flex; flex-wrap: wrap; align-items: end; gap: 0 18px; }
+.crop-filters .field { margin-block: 0 4px; }
