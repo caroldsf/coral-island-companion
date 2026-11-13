@@ -70,3 +70,5 @@ summary { cursor: pointer; }
   font-family: "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", sans-serif;
   font-size: 1.1rem;
 }
+
+.regrowth-chip { background: #d9f0df; color: #20593e; font-weight: 700; }

@@ -177,10 +177,11 @@ function App() {
       {item.englishName !== item.name && <p className="original">{item.englishName}</p>}
       <span className="chip">{labels[item.kind]}</span>
       {item.environment === 'ocean' ? <span className="chip">Cultivo subaquático</span> : <span className="chip">Cidade {item.rank}+</span>}
+      {item.regrowthDays && <span className="chip regrowth-chip">{item.kind === 'crop' ? 'Rebrota' : 'Produz'} a cada {item.regrowthDays} {item.regrowthDays === 1 ? 'dia' : 'dias'}</span>}
       <div className="details">
         <div>Produção em {item.seasons.join(' e ')}</div>
-        <div>{item.growthDays} dias para crescer{item.regrowthDays ? ` · rebrote a cada ${item.regrowthDays} dias` : ''}</div>
-        <div>{item.seedPrice == null ? 'Preço de plantio indisponível' : `Plantio ${money(item.seedPrice)}`} · {item.sellPrice == null ? 'venda indisponível' : `venda base ${money(item.sellPrice)}`}</div>
+        <div>{item.growthDays} dias para crescer</div>
+        <div>{item.seedPrice == null ? 'Preço de plantio indisponível' : `${item.kind === 'crop' ? 'Semente' : 'Muda'} ${money(item.seedPrice)}`} · {item.sellPrice == null ? 'venda indisponível' : `venda base ${money(item.sellPrice)}/unid.`}</div>
       </div>
       <div className="card-actions">
         {item.environment !== 'ocean' && item.seedPrice != null && item.sellPrice != null && <button className="link-button" onClick={() => {
