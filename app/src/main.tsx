@@ -182,6 +182,7 @@ function App() {
       <div className="card-title"><h3><span className="item-icon" aria-hidden="true">{cropIcon(item)}</span>{item.name}</h3>{favorite(cropId(item), item.name)}</div>
       {item.englishName !== item.name && <p className="original">{item.englishName}</p>}
       <span className="chip">{labels[item.kind]}</span>
+      <span className="chip category-chip">{item.category}</span>
       {item.environment === 'ocean' ? <span className="chip">Cultivo subaquático</span> : <span className="chip">Cidade {item.rank}+</span>}
       {item.regrowthDays && <span className="chip regrowth-chip">{item.kind === 'crop' ? 'Rebrota' : 'Produz'} a cada {item.regrowthDays} {item.regrowthDays === 1 ? 'dia' : 'dias'}</span>}
       <div className="details">
@@ -219,7 +220,7 @@ function App() {
   }
 
   const cropResults = available.filter(item => {
-    if (tab === 'search') return matches(query, item.name, item.englishName, labels[item.kind], ...item.seasons)
+    if (tab === 'search') return matches(query, item.name, item.englishName, labels[item.kind], item.category, ...item.seasons)
     if (tab === 'favorites') return favorites.includes(cropId(item))
     if (tab === 'fruit' && item.kind === 'crop') return false
     if (tab === 'crops' && (item.kind !== 'crop' || (regrowthOnly && !item.regrowthDays))) return false
